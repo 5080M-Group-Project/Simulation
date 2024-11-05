@@ -1,4 +1,4 @@
-# Control-System-codes
+# Simulation
 These are programmed in python with the intention of testing them using Pybullet
 
 Files have the naming convention 'NAME-DATE-TIME'
