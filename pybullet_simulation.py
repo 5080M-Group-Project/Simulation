@@ -11,9 +11,10 @@ pybullet.setGravity(0,0,-9.8)
 while True:
   pybullet.stepSimulation()
   posAndOrn = pybullet.getBasePositionAndOrientation(subj)
+  print(posAndOrn)
   maxForce = 500
   # jointIndex = 1 refers to the left wheel
-  pybullet.setJointMotorControl2(bodyUniqueId=subj, jointIndex=1, controlMode=pybullet.VELOCITY_CONTROL, targetVelocity=30.0)
+  pybullet.setJointMotorControl2(bodyUniqueId=subj, jointIndex=1, controlMode=pybullet.VELOCITY_CONTROL, targetVelocity=20.0)
   # jointIndex = 0 refers to the right wheel
-  pybullet.setJointMotorControl2(bodyUniqueId=subj, jointIndex=0, controlMode=pybullet.VELOCITY_CONTROL, targetVelocity=-30.0)
-  time.sleep(1/300)
+  pybullet.setJointMotorControl2(bodyUniqueId=subj, jointIndex=0, controlMode=pybullet.VELOCITY_CONTROL, targetVelocity=-20.0)
+  time.sleep(1/240)
