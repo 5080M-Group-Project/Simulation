@@ -5,7 +5,7 @@ import time
 
 pybullet.connect(pybullet.GUI)
 obj = pybullet.loadURDF(os.path.join(pybullet_data.getDataPath(), "plane.urdf"), 0, 0, -1)
-project_path = os.path.expanduser('~/PycharmProjects/Control-System-codes')
+project_path = os.path.expanduser('~/PycharmProjects/Simulation')
 subj = pybullet.loadURDF(os.path.join(project_path, "Robot-0411-1400/urdf/Robot-0411-1400.urdf"))
 pybullet.setGravity(0,0,-9.8)
 
