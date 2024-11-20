@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 
-project(Robot-0411-1400)
+project(robot_description)
 
 find_package(catkin REQUIRED)
 
