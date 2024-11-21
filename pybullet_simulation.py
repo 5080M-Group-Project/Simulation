@@ -5,8 +5,8 @@ import time
 
 pybullet.connect(pybullet.GUI)
 obj = pybullet.loadURDF(os.path.join(pybullet_data.getDataPath(), "plane.urdf"), 0, 0, -1)
-subj = pybullet.loadURDF(os.path.join(os.getcwd(), "robot_description/urdf/Robot-0411-1400.urdf"))
-pybullet.setGravity(0,0,-9.81)
+subj = pybullet.loadURDF(os.path.join(os.getcwd(), "robot_description/urdf/robot_description.urdf"))
+pybullet.setGravity(0,0,-9.8)
 
 while True:
   pybullet.stepSimulation()
