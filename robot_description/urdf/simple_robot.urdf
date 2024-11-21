@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
-     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
-     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+
 <robot
-        name="robot_description">
+        name="simple_robot">
     <link
             name="Body">
         <inertial>
@@ -59,27 +57,25 @@
                     iyz="3.05631062116939E-21"
                     izz="7.13246475399756E-05"/>
         </inertial>
-        <visual>
-            <origin
-                    xyz="0 0 0"
-                    rpy="0 0 0"/>
-            <geometry>
-                <mesh
-                        filename="package://robot_description/meshes/Wheel_1.STL"/>
-            </geometry>
-            <material
-                    name="">
-                <color
-                        rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
-            </material>
-        </visual>
+        <!--        <visual>-->
+        <!--            <origin-->
+        <!--                    xyz="0 0 0"-->
+        <!--                    rpy="0 0 0"/>-->
+        <!--            <geometry>-->
+        <!--                <cylinder radius="0.05" length="0.01"/>-->
+        <!--            </geometry>-->
+        <!--            <material-->
+        <!--                    name="">-->
+        <!--                <color-->
+        <!--                        rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>-->
+        <!--            </material>-->
+        <!--        </visual>-->
         <collision>
             <origin
                     xyz="0 0 0"
-                    rpy="0 0 0"/>
+                    rpy="1.5707963267948966 0 0"/>
             <geometry>
-                <mesh
-                        filename="package://robot_description/meshes/Wheel_1.STL"/>
+                <cylinder radius="0.05" length="0.01"/>
             </geometry>
         </collision>
     </link>
@@ -87,14 +83,14 @@
             name="Wheel_1"
             type="continuous">
         <origin
-                xyz="0 -0.075 0"
+                xyz="0 -0.07 0"
                 rpy="0 0 0"/>
         <parent
                 link="Body"/>
         <child
                 link="Wheel_1"/>
         <axis
-                xyz="0 -1 0"/>
+                xyz="0 1 0"/>
     </joint>
     <link
             name="Wheel_2">
@@ -112,27 +108,26 @@
                     iyz="-2.9293753358638E-21"
                     izz="7.13246475399756E-05"/>
         </inertial>
-        <visual>
-            <origin
-                    xyz="0 0 0"
-                    rpy="0 0 0"/>
-            <geometry>
-                <mesh
-                        filename="package://robot_description/meshes/Wheel_2.STL"/>
-            </geometry>
-            <material
-                    name="">
-                <color
-                        rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
-            </material>
-        </visual>
+        <!--        <visual>-->
+        <!--            <origin-->
+        <!--                    xyz="0 0 0"-->
+        <!--                    rpy="0 0 0"/>-->
+        <!--            <geometry>-->
+        <!--                <mesh-->
+        <!--                        filename="package://robot_description/meshes/Wheel_2.STL"/>-->
+        <!--            </geometry>-->
+        <!--            <material-->
+        <!--                    name="">-->
+        <!--                <color-->
+        <!--                        rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>-->
+        <!--            </material>-->
+        <!--        </visual>-->
         <collision>
             <origin
                     xyz="0 0 0"
-                    rpy="0 0 0"/>
+                    rpy="1.5707963267948966 0 0"/>
             <geometry>
-                <mesh
-                        filename="package://robot_description/meshes/Wheel_2.STL"/>
+                <cylinder radius="0.05" length="0.01"/>
             </geometry>
         </collision>
     </link>
@@ -140,13 +135,13 @@
             name="Wheel_2"
             type="continuous">
         <origin
-                xyz="0 0.065 0"
+                xyz="0 0.07 0"
                 rpy="0 0 0"/>
         <parent
                 link="Body"/>
         <child
                 link="Wheel_2"/>
         <axis
-                xyz="0 -1 0"/>
+                xyz="0 1 0"/>
     </joint>
 </robot>
