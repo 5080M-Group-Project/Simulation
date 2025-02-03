@@ -40,7 +40,7 @@ B = np.array([[0],
               [0],
               [1 / (body_mass * wheel_radius)]])
 
-Q = np.diag([80, 1, 50, 1])  # Increased penalties for pitch error and velocity error
+Q = np.diag([80, 1, 70, 1])  # Increased penalties for pitch error and velocity error
 R = np.array([[0.1]])  # Control cost matrix
 
 # Calculate LQR gain matrix K
