@@ -40,7 +40,7 @@ B = np.array([[0],
               [0],
               [1 / (body_mass * wheel_radius)]])
 
-Q = np.diag([80, 1, 70, 1])  # Increased penalties for pitch error and velocity error
+Q = np.diag([20, 1, 90, 1])  # Increased penalties for pitch error and velocity error
 R = np.array([[0.1]])  # Control cost matrix
 
 # Calculate LQR gain matrix K
@@ -77,9 +77,9 @@ for i in range(10000):
 
     # Alternate between forward and backward every 5 seconds
     if int(time_elapsed) % 10 < 5:  # First half of a 10-second cycle
-        desired_velocity = 2  # Move forward
+        desired_velocity = 1.5  # Move forward
     else:  # Second half of a 10-second cycle
-        desired_velocity = -2  # Move backward
+        desired_velocity = -1.5  # Move backward
 
     # Get robot state
     pos, orn = p.getBasePositionAndOrientation(robot_id)
@@ -94,7 +94,7 @@ for i in range(10000):
     last_position = pos[0]
 
     # Dynamically adjust the target pitch based on the desired velocity
-    pitch_offset = base_pitch_offset + 0.03 * desired_velocity  # Empirical adjustment
+    pitch_offset = base_pitch_offset + 0.04 * desired_velocity  # Empirical adjustment
 
 
     # Calculate the LQR input
