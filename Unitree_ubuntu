@@ -2,4 +2,5 @@ cd build/
 cmake..
 ls
 make
+ls
 sudo ./example_a1_motor
