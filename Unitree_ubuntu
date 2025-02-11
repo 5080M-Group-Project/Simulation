@@ -1,0 +1,5 @@
+cd build/
+cmake..
+ls
+make
+sudo ./example_a1_motor
