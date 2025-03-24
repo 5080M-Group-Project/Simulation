@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="phase_2_with_body">
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="-3.4536E-17 0.081103 -5.7912E-17"
+        rpy="0 0 0" />
+      <mass
+        value="1.6532" />
+      <inertia
+        ixx="0.013539"
+        ixy="-4.9342E-19"
+        ixz="4.3913E-09"
+        iyy="0.01565"
+        iyz="4.5489E-20"
+        izz="0.012432" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://phase_2_with_body/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.69804 0.69804 0.69804 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://phase_2_with_body/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="leftleg">
+    <inertial>
+      <origin
+        xyz="0.073251 -0.020583 -6.7515E-07"
+        rpy="0 0 0" />
+      <mass
+        value="0.28259" />
+      <inertia
+        ixx="0.00014779"
+        ixy="3.9261E-05"
+        ixz="-1.1308E-08"
+        iyy="0.0012793"
+        iyz="2.4962E-09"
+        izz="0.001156" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://phase_2_with_body/meshes/leftleg.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.69804 0.69804 0.69804 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://phase_2_with_body/meshes/leftleg.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="j1"
+    type="revolute">
+    <origin
+      xyz="0 -0.121 0.06"
+      rpy="0 0.73435 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="leftleg" />
+    <axis
+      xyz="0 -1 0" />
+    <limit
+      lower="0"
+      upper="0"
+      effort="0"
+      velocity="0" />
+  </joint>
+  <link
+    name="lefthip">
+    <inertial>
+      <origin
+        xyz="0.070185 0.010348 -8.6538E-07"
+        rpy="0 0 0" />
+      <mass
+        value="0.17148" />
+      <inertia
+        ixx="9.0843E-05"
+        ixy="3.395E-05"
+        ixz="-8.3404E-09"
+        iyy="0.00078138"
+        iyz="2.1743E-09"
+        izz="0.00071185" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://phase_2_with_body/meshes/lefthip.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.69804 0.69804 0.69804 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://phase_2_with_body/meshes/lefthip.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="j2"
+    type="revolute">
+    <origin
+      xyz="0.165 -0.051 0"
+      rpy="0 1.5708 0" />
+    <parent
+      link="leftleg" />
+    <child
+      link="lefthip" />
+    <axis
+      xyz="0 0 0" />
+    <limit
+      lower="0"
+      upper="0"
+      effort="0"
+      velocity="0" />
+  </joint>
+  <link
+    name="leftwheel">
+    <inertial>
+      <origin
+        xyz="-4.1911E-15 -0.0128 -8.8818E-16"
+        rpy="0 0 0" />
+      <mass
+        value="0.21867" />
+      <inertia
+        ixx="0.00041387"
+        ixy="2.4714E-20"
+        ixz="-9.3512E-19"
+        iyy="0.00081466"
+        iyz="-1.3336E-19"
+        izz="0.00041387" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://phase_2_with_body/meshes/leftwheel.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.69804 0.69804 0.69804 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://phase_2_with_body/meshes/leftwheel.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="j3"
+    type="revolute">
+    <origin
+      xyz="0.165 -0.0082 0"
+      rpy="0 -1.469 0" />
+    <parent
+      link="lefthip" />
+    <child
+      link="leftwheel" />
+    <axis
+      xyz="0 -1 0" />
+    <limit
+      lower="0"
+      upper="0"
+      effort="0"
+      velocity="0" />
+  </joint>
+  <link
+    name="rightleg">
+    <inertial>
+      <origin
+        xyz="-3.4536E-17 0.081103 -5.7912E-17"
+        rpy="0 0 0" />
+      <mass
+        value="1.6532" />
+      <inertia
+        ixx="0.013539"
+        ixy="-4.9342E-19"
+        ixz="4.3913E-09"
+        iyy="0.01565"
+        iyz="4.5489E-20"
+        izz="0.012432" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://phase_2_with_body/meshes/rightleg.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.69804 0.69804 0.69804 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://phase_2_with_body/meshes/rightleg.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="j4"
+    type="revolute">
+    <origin
+      xyz="0 0.121 0.06"
+      rpy="3.1416 0.73435 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="rightleg" />
+    <axis
+      xyz="0 -1 0" />
+    <limit
+      lower="0"
+      upper="0"
+      effort="0"
+      velocity="0" />
+  </joint>
+  <link
+    name="righthip">
+    <inertial>
+      <origin
+        xyz="0.070185 0.010348 -8.6538E-07"
+        rpy="0 0 0" />
+      <mass
+        value="0.17148" />
+      <inertia
+        ixx="9.0843E-05"
+        ixy="3.395E-05"
+        ixz="-8.3404E-09"
+        iyy="0.00078138"
+        iyz="2.1743E-09"
+        izz="0.00071185" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://phase_2_with_body/meshes/righthip.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.69804 0.69804 0.69804 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://phase_2_with_body/meshes/righthip.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="j5"
+    type="revolute">
+    <origin
+      xyz="0.165 -0.051 0"
+      rpy="3.1416 -1.5708 0" />
+    <parent
+      link="rightleg" />
+    <child
+      link="righthip" />
+    <axis
+      xyz="0 0 0" />
+    <limit
+      lower="0"
+      upper="0"
+      effort="0"
+      velocity="0" />
+  </joint>
+  <link
+    name="rightwheel">
+    <inertial>
+      <origin
+        xyz="1.9929E-14 -5.2736E-16 -2.5258E-14"
+        rpy="0 0 0" />
+      <mass
+        value="0.21867" />
+      <inertia
+        ixx="0.00041387"
+        ixy="2.8474E-20"
+        ixz="-1.1384E-18"
+        iyy="0.00081466"
+        iyz="1.387E-19"
+        izz="0.00041387" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://phase_2_with_body/meshes/rightwheel.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.69804 0.69804 0.69804 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://phase_2_with_body/meshes/rightwheel.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="j6"
+    type="revolute">
+    <origin
+      xyz="0.165 -0.021 0"
+      rpy="0 1.469 0" />
+    <parent
+      link="righthip" />
+    <child
+      link="rightwheel" />
+    <axis
+      xyz="0 0 0" />
+    <limit
+      lower="0"
+      upper="0"
+      effort="0"
+      velocity="0" />
+  </joint>
+</robot>
