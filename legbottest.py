@@ -13,8 +13,8 @@ p.setGravity(0, 0, -9.81)
 # Parameters
 time_step = 1 / 240
 wheel_radius = 0.05
-body_mass = 0.45  # kg
-robot_height = 0.15  # height of the center of mass from the wheel axis
+body_mass = 6.37  # kg
+robot_height = 0.20  # height of the center of mass from the wheel axis
 g = 9.81  # gravitational acceleration
 max_wheel_speed = 20  # Max wheel angular velocity (rad/s)
 
@@ -27,7 +27,13 @@ spawn_height = 0.5  # Adjust to ensure proper contact with ground
 robot_id = p.loadURDF(os.path.join(project_path, "lucasURDF/urdf/lucasURDF.urdf"),
                       basePosition=[0, 0, spawn_height])
 
+# Joint indices
+HIP_JOINT = 0
+KNEE_JOINT = 1
+LEFT_WHEEL = 2
+RIGHT_WHEEL = 3
 
+ 
 # LQR Controller parameters
 A = np.array([[0, 1, 0, 0],
               [0, 0, g / robot_height, 0],
