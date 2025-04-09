@@ -21,7 +21,7 @@ max_wheel_speed = 20  # Max wheel angular velocity (rad/s)
 # Load plane and robot model
 plane_id = p.loadURDF(os.path.join(pybullet_data.getDataPath(), "plane.urdf"), 0, 0, -1)
 project_path = os.path.expanduser('~/PycharmProjects/Simulation')
-spawn_height = 0.5  # Adjust to ensure proper contact with ground
+spawn_height = -0.7  # Adjust to ensure proper contact with ground
 robot_id = p.loadURDF(os.path.join(project_path, "lucasURDF/urdf/lucasURDF.urdf"),
                       basePosition=[0, 0, spawn_height])
 
@@ -42,7 +42,7 @@ B = np.array([[0, 0],
               [0, 0],
               [1 / (body_mass * wheel_radius), -1 / (body_mass * wheel_radius)]])  # Left & Right wheel influence
 
-Q = np.diag([20, 1, 90, 1])  # Penalties for pitch error, pitch rate, velocity error, and yaw rate error
+Q = np.diag([10, 1, 180, 1])  # Penalties for pitch error, pitch rate, velocity error, and yaw rate error
 R = np.diag([0.1, 0.1])  # Control effort for left and right wheel speeds
 
 # Solve the continuous-time algebraic Riccati equation
@@ -50,8 +50,8 @@ P = solve_continuous_are(A, B, Q, R)
 K = np.linalg.inv(R) @ B.T @ P  # Compute LQR gain matrix
 
 # Adjustable offsets
-base_pitch_offset = 0  # Target pitch offset (rad)
-desired_velocity = 0  # Forward velocity input
+base_pitch_offset = 0.07  # Target pitch offset (rad)
+desired_velocity = -0  # Forward velocity input
 desired_yaw_rate = 0  # Turning rate input
 desired_knee_angle = 0.0  # Control crouch height
 desired_hip_angle = 0.0  # Control head tilt
@@ -76,10 +76,10 @@ for i in range(10000000):
     time_elapsed += time_step
 
     # Alternate desired velocity every 5 seconds
-    if int(time_elapsed) % 10 < 5:
-        desired_velocity = 1.5
-    else:
-        desired_velocity = -1.5
+    #if int(time_elapsed) % 10 < 5:
+    #    desired_velocity = 0
+    #else:
+    #    desired_velocity = 0
 
     # Get robot state
     pos, orn = p.getBasePositionAndOrientation(robot_id)
@@ -101,9 +101,9 @@ for i in range(10000000):
 
     # Apply wheel velocities
     p.setJointMotorControl2(robot_id, jointIndex=LEFT_WHEEL, controlMode=p.VELOCITY_CONTROL,
-                            targetVelocity=left_wheel_speed)
+                            targetVelocity=-left_wheel_speed)
     p.setJointMotorControl2(robot_id, jointIndex=RIGHT_WHEEL, controlMode=p.VELOCITY_CONTROL,
-                            targetVelocity=right_wheel_speed)
+                            targetVelocity=-right_wheel_speed)
 
     # Control hip and knee joints separately
     p.setJointMotorControl2(robot_id, jointIndex=HIP_JOINT, controlMode=p.POSITION_CONTROL,
@@ -118,7 +118,7 @@ for i in range(10000000):
                                  cameraTargetPosition=pos)
 
     print(
-        f"Time: {time_elapsed:.2f}s | Pitch: {np.degrees(pitch_angle):.2f}° | Yaw: {np.degrees(yaw_angle):.2f}° | Velocity: {desired_velocity:.2f} m/s")
+        f"Time: {time_elapsed:.2f}s | Pitch: {np.degrees(pitch_angle):.2f}° | Yaw: {np.degrees(yaw_angle):.2f}° | Desired Velocity: {-1*desired_velocity:.2f} m/s | Actual forward velocity: {-1*forward_velocity:.2f} m/s")
 
     p.stepSimulation()
     time.sleep(time_step)
