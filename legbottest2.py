@@ -42,7 +42,7 @@ B = np.array([[0, 0],
               [0, 0],
               [1 / (body_mass * wheel_radius), -1 / (body_mass * wheel_radius)]])  # Left & Right wheel influence
 
-Q = np.diag([10, 1, 180, 1])  # Penalties for pitch error, pitch rate, velocity error, and yaw rate error
+Q = np.diag([100, 1, 180, 10])  # Penalties for pitch error, pitch rate, velocity error, and yaw rate error
 R = np.diag([0.1, 0.1])  # Control effort for left and right wheel speeds
 
 # Solve the continuous-time algebraic Riccati equation
@@ -50,12 +50,14 @@ P = solve_continuous_are(A, B, Q, R)
 K = np.linalg.inv(R) @ B.T @ P  # Compute LQR gain matrix
 
 # Adjustable offsets
-base_pitch_offset = 0.07  # Target pitch offset (rad)
+base_pitch_offset = 0.07 #0.07  # Target pitch offset (rad)
 desired_velocity = -0  # Forward velocity input
 desired_yaw_rate = 0  # Turning rate input
-desired_knee_angle = 0.0  # Control crouch height
-desired_hip_angle = 0.0  # Control head tilt
-
+desired_knee_angle = 0  # Control crouch height. pos extends, causes forward drift, neg crouches causing backward drift
+desired_hip_angle = -0 # Control head tilt. pos tilt back, causes forward drift
+#as knee crouches, head needs to tilt back, both crouch = forward drift
+#as knee extends, head tilt must tilt forward = backward drift
+#can brute force to find pitch offset relationship to correct drift at each crouch lvl
 
 def lqr_control(state, desired_velocity, desired_yaw_rate, pitch_offset):
     state_error = np.array(
