@@ -6,7 +6,7 @@ import time
 import csv
 from scipy.linalg import solve_continuous_are
 
-# Initialize PyBullet
+# Initialize simulation environment
 p.connect(p.GUI)
 p.setAdditionalSearchPath(pybullet_data.getDataPath())
 p.setGravity(0, 0, -9.81)
@@ -15,9 +15,10 @@ p.setGravity(0, 0, -9.81)
 time_step = 1 / 1000
 wheel_radius = 0.05
 body_mass = 8.128  # kg
-robot_height = 0.1736  # CoM height from axle (for LQR model)
+robot_height = 0.1736  # vertical distance from wheel axis to COM (used for simplified model)
 g = 9.81
-max_torque = 30  # Nm
+max_wheel_speed = 20  # rad/s
+MAX_TORQUE = 30  # Nm limit for motors
 
 # Load plane and robot
 plane_id = p.loadURDF("plane.urdf", 0, 0, -1)
@@ -32,7 +33,7 @@ KNEE_JOINT = 1
 LEFT_WHEEL = 2
 RIGHT_WHEEL = 3
 
-# LQR system
+# LQR setup
 A = np.array([[0, 1, 0, 0],
               [0, 0, g / robot_height, 0],
               [0, 0, 0, 1],
@@ -43,83 +44,119 @@ B = np.array([[0, 0],
               [0, 0],
               [1 / (body_mass * wheel_radius), -1 / (body_mass * wheel_radius)]])
 
-Q = np.diag([200, 1, 180, 40])
+Q = np.diag([200, 2, 180, 40])
 R = np.diag([0.1, 0.1])
 P = solve_continuous_are(A, B, Q, R)
 K = np.linalg.inv(R) @ B.T @ P
 
-# Control settings
+# Control targets
 base_pitch_offset = -0.09
-desired_velocity = 0.2  # Forward input (positive now = forward)
+desired_velocity = 0.0  # POSITIVE = forward now
 desired_yaw_rate = 0
 desired_knee_angle = 0
-desired_hip_angle = 0
+desired_hip_angle = -0
 
-# Logging
-log = []
+# Camera
+camera_distance = 0.75
+camera_yaw = 50
+camera_pitch = -30
 
-# Helper: Compute COM-based pitch
-def compute_body_pitch():
-    com_pos, _ = p.getDynamicsInfo(robot_id, -1)[3], None
-    wheel_pos = np.array(p.getLinkState(robot_id, LEFT_WHEEL)[0])
-    com_world = np.array(p.getBasePositionAndOrientation(robot_id)[0]) + com_pos
-    vec = com_world - wheel_pos
-    pitch = np.arctan2(vec[2], vec[0])  # angle above horizontal
-    return pitch
-
-# Control loop
+# Telemetry storage
+telemetry_data = []
 time_elapsed = 0
-last_position = p.getBasePositionAndOrientation(robot_id)[0][0]
+last_position = 0
 
-for i in range(20000):
-    time_elapsed += time_step
+# Utility: calculate pitch from COM to wheel axis
+def compute_body_pitch():
+    com_pos, _ = p.getLinkState(robot_id, HIP_JOINT, computeForwardKinematics=True)[0:2]
+    base_pos, _ = p.getBasePositionAndOrientation(robot_id)
+    dx = com_pos[0] - base_pos[0]
+    dz = com_pos[2] - base_pos[2]
+    return np.arctan2(dz, dx)
 
-    # Get robot state
-    pos, orn = p.getBasePositionAndOrientation(robot_id)
-    head_pitch = p.getEulerFromQuaternion(orn)[1]
-    body_pitch = compute_body_pitch()
-    linear_velocity, angular_velocity = p.getBaseVelocity(robot_id)
-    pitch_rate = angular_velocity[1]
-    forward_velocity = (pos[0] - last_position) / time_step
-    last_position = pos[0]
-    yaw_rate = angular_velocity[2]
+# Control function
+def lqr_control(state, desired_velocity, desired_yaw_rate, pitch_offset):
+    state_error = np.array([
+        state[0] - pitch_offset,
+        state[1],
+        state[2] - desired_velocity,
+        state[3] - desired_yaw_rate
+    ])
+    wheel_velocities = -K @ state_error
+    return np.clip(wheel_velocities, -max_wheel_speed, max_wheel_speed)
 
-    # LQR control
-    pitch_error = body_pitch - base_pitch_offset
-    velocity_error = forward_velocity - desired_velocity
-    yaw_rate_error = yaw_rate - desired_yaw_rate
+# Main loop
+try:
+    for i in range(10000000):
+        time_elapsed += time_step
 
-    state = np.array([body_pitch, pitch_rate, forward_velocity, yaw_rate])
-    wheel_velocities = -K @ np.array([pitch_error, pitch_rate, velocity_error, yaw_rate_error])
+        # Get kinematics
+        base_pos, base_orn = p.getBasePositionAndOrientation(robot_id)
+        euler = p.getEulerFromQuaternion(base_orn)
+        head_pitch = euler[1]
+        yaw_angle = euler[2]
+        linear_velocity, angular_velocity = p.getBaseVelocity(robot_id)
+        pitch_rate = angular_velocity[1]
+        yaw_rate = angular_velocity[2]
+        forward_velocity = (base_pos[0] - last_position) / time_step
+        last_position = base_pos[0]
 
-    # Approximate velocity control using torque control
-    for joint, desired_vel in zip([LEFT_WHEEL, RIGHT_WHEEL], wheel_velocities):
-        actual_vel = p.getJointState(robot_id, joint)[1]
-        vel_error = desired_vel - actual_vel
-        torque = np.clip(2.0 * vel_error, -max_torque, max_torque)  # P controller on velocity
-        p.setJointMotorControl2(robot_id, jointIndex=joint,
-                                controlMode=p.TORQUE_CONTROL,
-                                force=torque)
+        # New corrected pitch
+        body_pitch = head_pitch #compute_body_pitch()
 
-    # Hip and knee
-    p.setJointMotorControl2(robot_id, HIP_JOINT, controlMode=p.POSITION_CONTROL,
-                            targetPosition=desired_hip_angle)
-    p.setJointMotorControl2(robot_id, KNEE_JOINT, controlMode=p.POSITION_CONTROL,
-                            targetPosition=desired_knee_angle)
+        # Run LQR
+        state = np.array([body_pitch, pitch_rate, forward_velocity, yaw_rate])
+        pitch_offset = base_pitch_offset
+        left_wheel_speed, right_wheel_speed = lqr_control(state, desired_velocity, desired_yaw_rate, pitch_offset)
 
-    # Log data
-    log.append([time_elapsed, head_pitch, body_pitch, pitch_rate, forward_velocity,
-                desired_velocity, wheel_velocities[0], wheel_velocities[1],
-                pitch_error, yaw_rate_error])
+        # Apply control
+        p.setJointMotorControl2(robot_id, LEFT_WHEEL, controlMode=p.VELOCITY_CONTROL,
+                                targetVelocity=-left_wheel_speed, force=MAX_TORQUE)
+        p.setJointMotorControl2(robot_id, RIGHT_WHEEL, controlMode=p.VELOCITY_CONTROL,
+                                targetVelocity=-right_wheel_speed, force=MAX_TORQUE)
 
-    p.stepSimulation()
-    time.sleep(time_step)
+        p.setJointMotorControl2(robot_id, HIP_JOINT, controlMode=p.POSITION_CONTROL,
+                                targetPosition=desired_hip_angle)
+        p.setJointMotorControl2(robot_id, KNEE_JOINT, controlMode=p.POSITION_CONTROL,
+                                targetPosition=desired_knee_angle)
 
-# Save log to CSV
-with open("telemetry_log.csv", "w", newline="") as f:
-    writer = csv.writer(f)
-    writer.writerow(["time", "head_pitch", "body_pitch", "pitch_rate", "forward_velocity",
-                     "desired_velocity", "left_cmd", "right_cmd", "pitch_error", "yaw_rate_error"])
-    writer.writerows(log)
+        # Update camera
+        p.resetDebugVisualizerCamera(cameraDistance=camera_distance,
+                                     cameraYaw=camera_yaw,
+                                     cameraPitch=camera_pitch,
+                                     cameraTargetPosition=base_pos)
 
-print("✅ Telemetry saved to telemetry_log.csv")
+        # Print for live feedback
+        print(f"Time: {time_elapsed:.2f}s | Body Pitch: {np.degrees(body_pitch):.2f}° | "
+              f"Head Pitch: {np.degrees(head_pitch):.2f}° | "
+              f"Desired V: {desired_velocity:.2f} | Actual V: {forward_velocity:.2f}")
+
+        # Telemetry log
+        telemetry_data.append([
+            time_elapsed,
+            body_pitch,
+            head_pitch,
+            pitch_rate,
+            forward_velocity,
+            left_wheel_speed,
+            right_wheel_speed,
+            desired_velocity,
+            body_pitch - pitch_offset,
+            yaw_rate - desired_yaw_rate
+        ])
+
+        p.stepSimulation()
+        time.sleep(time_step)
+
+finally:
+    Q_vals = np.diag(Q).astype(int)
+    q_string = "_".join(map(str, Q_vals))
+    filename = f"telemetry_Q_{q_string}.csv"
+
+    with open(filename, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["Time", "Body Pitch (rad)", "Head Pitch (rad)", "Pitch Rate (rad/s)",
+                         "Velocity (m/s)", "Left Wheel Speed", "Right Wheel Speed",
+                         "Desired Velocity", "Pitch Error", "Yaw Rate Error"])
+        writer.writerows(telemetry_data)
+    print(f"Telemetry saved to {filename}")

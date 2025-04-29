@@ -17,6 +17,7 @@ body_mass = 8.128  # kg
 robot_height = 0.1736  # height of the center of mass from the wheel axis
 g = 9.81  # gravitational acceleration
 max_wheel_speed = 20  # Max wheel angular velocity (rad/s)
+MAX_TORQUE = 30  # Nm limit for motors
 
 # Load plane and robot model
 plane_id = p.loadURDF(os.path.join(pybullet_data.getDataPath(), "plane.urdf"), 0, 0, -1)
@@ -61,7 +62,7 @@ desired_hip_angle = -0 # Control head tilt. pos tilt back, causes forward drift
 
 def lqr_control(state, desired_velocity, desired_yaw_rate, pitch_offset):
     state_error = np.array(
-        [state[0] - pitch_offset, state[1], state[2] - desired_velocity, state[3] - desired_yaw_rate])
+        [state[0] - pitch_offset, state[1], state[2] + desired_velocity, state[3] - desired_yaw_rate])
     wheel_velocities = -K @ state_error  # Compute optimal wheel speeds
     return np.clip(wheel_velocities, -max_wheel_speed, max_wheel_speed)  # Clamp to motor limits
 
@@ -101,16 +102,15 @@ for i in range(10000000):
     state = np.array([pitch_angle, pitch_rate, forward_velocity, yaw_rate])
     left_wheel_speed, right_wheel_speed = lqr_control(state, desired_velocity, desired_yaw_rate, pitch_offset)
 
-    # Apply wheel velocities
-    p.setJointMotorControl2(robot_id, jointIndex=LEFT_WHEEL, controlMode=p.VELOCITY_CONTROL,
-                            targetVelocity=-left_wheel_speed)
-    p.setJointMotorControl2(robot_id, jointIndex=RIGHT_WHEEL, controlMode=p.VELOCITY_CONTROL,
-                            targetVelocity=-right_wheel_speed)
+    # Apply control
+    p.setJointMotorControl2(robot_id, LEFT_WHEEL, controlMode=p.VELOCITY_CONTROL,
+                            targetVelocity=-left_wheel_speed, force=MAX_TORQUE)
+    p.setJointMotorControl2(robot_id, RIGHT_WHEEL, controlMode=p.VELOCITY_CONTROL,
+                            targetVelocity=-right_wheel_speed, force=MAX_TORQUE)
 
-    # Control hip and knee joints separately
-    p.setJointMotorControl2(robot_id, jointIndex=HIP_JOINT, controlMode=p.POSITION_CONTROL,
+    p.setJointMotorControl2(robot_id, HIP_JOINT, controlMode=p.POSITION_CONTROL,
                             targetPosition=desired_hip_angle)
-    p.setJointMotorControl2(robot_id, jointIndex=KNEE_JOINT, controlMode=p.POSITION_CONTROL,
+    p.setJointMotorControl2(robot_id, KNEE_JOINT, controlMode=p.POSITION_CONTROL,
                             targetPosition=desired_knee_angle)
 
     # Update camera position
@@ -120,7 +120,7 @@ for i in range(10000000):
                                  cameraTargetPosition=pos)
 
     print(
-        f"Time: {time_elapsed:.2f}s | Pitch: {np.degrees(pitch_angle-base_pitch_offset):.2f}° | Yaw: {np.degrees(yaw_angle):.2f}° | Desired Velocity: {-1*desired_velocity:.2f} m/s | Actual forward velocity: {-1*forward_velocity:.2f} m/s")
+        f"Time: {time_elapsed:.2f}s | Pitch: {np.degrees(pitch_angle-base_pitch_offset):.2f}° | Yaw: {np.degrees(yaw_angle):.2f}° | Desired Velocity: {desired_velocity:.2f} m/s | Actual forward velocity: {-1*forward_velocity:.2f} m/s")
 
     p.stepSimulation()
     time.sleep(time_step)
