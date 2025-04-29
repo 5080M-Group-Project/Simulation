@@ -13,7 +13,7 @@ p.setGravity(0, 0, -9.81)
 # Parameters
 time_step = 1 / 240
 wheel_radius = 0.05
-body_mass = 6.37  # kg
+body_mass = 8.128  # kg
 robot_height = 0.20  # height of the center of mass from the wheel axis
 g = 9.81  # gravitational acceleration
 max_wheel_speed = 20  # Max wheel angular velocity (rad/s)
@@ -22,7 +22,7 @@ max_wheel_speed = 20  # Max wheel angular velocity (rad/s)
 plane_id = p.loadURDF(os.path.join(pybullet_data.getDataPath(), "plane.urdf"), 0, 0, -1)
 project_path = os.path.expanduser('~/PycharmProjects/Simulation')
 spawn_height = -0.7  # Adjust to ensure proper contact with ground
-robot_id = p.loadURDF(os.path.join(project_path, "lucasURDF2/urdf/lucasURDF2.urdf"),
+robot_id = p.loadURDF(os.path.join(project_path, "lucasURDF3/urdf/lucasURDF3.urdf"),
                       basePosition=[0, 0, spawn_height])
 
 # Joint indices
