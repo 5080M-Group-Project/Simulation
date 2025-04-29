@@ -11,7 +11,7 @@ p.setAdditionalSearchPath(pybullet_data.getDataPath())
 p.setGravity(0, 0, -9.81)
 
 # Parameters
-time_step = 1 / 240
+time_step = 1 / 1000
 wheel_radius = 0.05
 body_mass = 8.128  # kg
 robot_height = 0.1736  # height of the center of mass from the wheel axis
@@ -42,7 +42,7 @@ B = np.array([[0, 0],
               [0, 0],
               [1 / (body_mass * wheel_radius), -1 / (body_mass * wheel_radius)]])  # Left & Right wheel influence
 
-Q = np.diag([200, 1, 180, 10])  # Penalties for pitch error, pitch rate, velocity error, and yaw rate error 200,1,180,10 stationary gains
+Q = np.diag([200, 1, 180, 40])  # Penalties for pitch error, pitch rate, velocity error, and yaw rate error 200,1,180,10 stationary gains
 R = np.diag([0.1, 0.1])  # Control effort for left and right wheel speeds
 
 # Solve the continuous-time algebraic Riccati equation
@@ -51,8 +51,8 @@ K = np.linalg.inv(R) @ B.T @ P  # Compute LQR gain matrix
 
 # Adjustable offsets
 base_pitch_offset =  -0.09 #0.07  # Target pitch offset (rad)
-desired_velocity = -0  # Forward velocity input
-desired_yaw_rate = 0  # Turning rate input
+desired_velocity = 0.2  # Forward velocity input neg=forward
+desired_yaw_rate = -0  # Turning rate input pos=left
 desired_knee_angle = 0  # Control crouch height. pos extends, causes forward drift, neg crouches causing backward drift
 desired_hip_angle = -0 # Control head tilt. pos tilt back, causes forward drift
 #as knee crouches, head needs to tilt back, both crouch = forward drift
@@ -120,7 +120,7 @@ for i in range(10000000):
                                  cameraTargetPosition=pos)
 
     print(
-        f"Time: {time_elapsed:.2f}s | Pitch: {np.degrees(pitch_angle):.2f}° | Yaw: {np.degrees(yaw_angle):.2f}° | Desired Velocity: {-1*desired_velocity:.2f} m/s | Actual forward velocity: {-1*forward_velocity:.2f} m/s")
+        f"Time: {time_elapsed:.2f}s | Pitch: {np.degrees(pitch_angle-base_pitch_offset):.2f}° | Yaw: {np.degrees(yaw_angle):.2f}° | Desired Velocity: {-1*desired_velocity:.2f} m/s | Actual forward velocity: {-1*forward_velocity:.2f} m/s")
 
     p.stepSimulation()
     time.sleep(time_step)

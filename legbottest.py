@@ -3,26 +3,27 @@ import numpy as np
 import pybullet_data
 import os
 import time
+import csv
 from scipy.linalg import solve_continuous_are
 
-# Initialize simulation environment
+# Initialize PyBullet
 p.connect(p.GUI)
 p.setAdditionalSearchPath(pybullet_data.getDataPath())
 p.setGravity(0, 0, -9.81)
 
 # Parameters
-time_step = 1 / 240
+time_step = 1 / 1000
 wheel_radius = 0.05
-body_mass = 6.37  # kg
-robot_height = 0.20  # height of the center of mass from the wheel axis
-g = 9.81  # gravitational acceleration
-max_wheel_speed = 20  # Max wheel angular velocity (rad/s)
+body_mass = 8.128  # kg
+robot_height = 0.1736  # CoM height from axle (for LQR model)
+g = 9.81
+max_torque = 30  # Nm
 
-# Load plane and robot model
-plane_id = p.loadURDF(os.path.join(pybullet_data.getDataPath(), "plane.urdf"), 0, 0, -1)
+# Load plane and robot
+plane_id = p.loadURDF("plane.urdf", 0, 0, -1)
 project_path = os.path.expanduser('~/PycharmProjects/Simulation')
-spawn_height = -0.7  # Adjust to ensure proper contact with ground
-robot_id = p.loadURDF(os.path.join(project_path, "lucasURDF/urdf/lucasURDF.urdf"),
+spawn_height = -0.65
+robot_id = p.loadURDF(os.path.join(project_path, "lucasURDF3/urdf/lucasURDF3.urdf"),
                       basePosition=[0, 0, spawn_height])
 
 # Joint indices
@@ -31,7 +32,7 @@ KNEE_JOINT = 1
 LEFT_WHEEL = 2
 RIGHT_WHEEL = 3
 
-# LQR Controller setup with desired state vector: [pitch, pitch_rate, forward_velocity, yaw_rate]
+# LQR system
 A = np.array([[0, 1, 0, 0],
               [0, 0, g / robot_height, 0],
               [0, 0, 0, 1],
@@ -40,86 +41,85 @@ A = np.array([[0, 1, 0, 0],
 B = np.array([[0, 0],
               [1 / (body_mass * wheel_radius ** 2), 1 / (body_mass * wheel_radius ** 2)],
               [0, 0],
-              [1 / (body_mass * wheel_radius), -1 / (body_mass * wheel_radius)]])  # Left & Right wheel influence
+              [1 / (body_mass * wheel_radius), -1 / (body_mass * wheel_radius)]])
 
-Q = np.diag([10, 1, 180, 1])  # Penalties for pitch error, pitch rate, velocity error, and yaw rate error
-R = np.diag([0.1, 0.1])  # Control effort for left and right wheel speeds
-
-# Solve the continuous-time algebraic Riccati equation
+Q = np.diag([200, 1, 180, 40])
+R = np.diag([0.1, 0.1])
 P = solve_continuous_are(A, B, Q, R)
-K = np.linalg.inv(R) @ B.T @ P  # Compute LQR gain matrix
+K = np.linalg.inv(R) @ B.T @ P
 
-# Adjustable offsets
-base_pitch_offset = 0.07  # Target pitch offset (rad)
-desired_velocity = -0  # Forward velocity input
-desired_yaw_rate = 0  # Turning rate input
-desired_knee_angle = 0.0  # Control crouch height
-desired_hip_angle = 0.0  # Control head tilt
+# Control settings
+base_pitch_offset = -0.09
+desired_velocity = 0.2  # Forward input (positive now = forward)
+desired_yaw_rate = 0
+desired_knee_angle = 0
+desired_hip_angle = 0
 
+# Logging
+log = []
 
-def lqr_control(state, desired_velocity, desired_yaw_rate, pitch_offset):
-    state_error = np.array(
-        [state[0] - pitch_offset, state[1], state[2] - desired_velocity, state[3] - desired_yaw_rate])
-    wheel_velocities = -K @ state_error  # Compute optimal wheel speeds
-    return np.clip(wheel_velocities, -max_wheel_speed, max_wheel_speed)  # Clamp to motor limits
+# Helper: Compute COM-based pitch
+def compute_body_pitch():
+    com_pos, _ = p.getDynamicsInfo(robot_id, -1)[3], None
+    wheel_pos = np.array(p.getLinkState(robot_id, LEFT_WHEEL)[0])
+    com_world = np.array(p.getBasePositionAndOrientation(robot_id)[0]) + com_pos
+    vec = com_world - wheel_pos
+    pitch = np.arctan2(vec[2], vec[0])  # angle above horizontal
+    return pitch
 
-
-# Camera settings
-camera_distance = 0.75
-camera_yaw = 50
-camera_pitch = -30
-
+# Control loop
 time_elapsed = 0
-last_position = 0
+last_position = p.getBasePositionAndOrientation(robot_id)[0][0]
 
-for i in range(10000000):
+for i in range(20000):
     time_elapsed += time_step
-
-    # Alternate desired velocity every 5 seconds
-    #if int(time_elapsed) % 10 < 5:
-    #    desired_velocity = 0
-    #else:
-    #    desired_velocity = 0
 
     # Get robot state
     pos, orn = p.getBasePositionAndOrientation(robot_id)
-    euler = p.getEulerFromQuaternion(orn)
-    pitch_angle = euler[1]
-    xpos = pos[0]
-    #yaw_angle = euler[2]
+    head_pitch = p.getEulerFromQuaternion(orn)[1]
+    body_pitch = compute_body_pitch()
     linear_velocity, angular_velocity = p.getBaseVelocity(robot_id)
     pitch_rate = angular_velocity[1]
     forward_velocity = (pos[0] - last_position) / time_step
     last_position = pos[0]
-    #yaw_rate = angular_velocity[2]
+    yaw_rate = angular_velocity[2]
 
-    # Dynamic pitch offset
-    pitch_offset = base_pitch_offset + 0.04 * desired_velocity
+    # LQR control
+    pitch_error = body_pitch - base_pitch_offset
+    velocity_error = forward_velocity - desired_velocity
+    yaw_rate_error = yaw_rate - desired_yaw_rate
 
-    # Compute wheel speeds using LQR
-    state = np.array([pitch_angle, pitch_rate, forward_velocity, xpos])
-    left_wheel_speed, right_wheel_speed = lqr_control(state, desired_velocity, desired_yaw_rate, pitch_offset)
+    state = np.array([body_pitch, pitch_rate, forward_velocity, yaw_rate])
+    wheel_velocities = -K @ np.array([pitch_error, pitch_rate, velocity_error, yaw_rate_error])
 
-    # Apply wheel velocities
-    p.setJointMotorControl2(robot_id, jointIndex=LEFT_WHEEL, controlMode=p.VELOCITY_CONTROL,
-                            targetVelocity=-left_wheel_speed)
-    p.setJointMotorControl2(robot_id, jointIndex=RIGHT_WHEEL, controlMode=p.VELOCITY_CONTROL,
-                            targetVelocity=-right_wheel_speed)
+    # Approximate velocity control using torque control
+    for joint, desired_vel in zip([LEFT_WHEEL, RIGHT_WHEEL], wheel_velocities):
+        actual_vel = p.getJointState(robot_id, joint)[1]
+        vel_error = desired_vel - actual_vel
+        torque = np.clip(2.0 * vel_error, -max_torque, max_torque)  # P controller on velocity
+        p.setJointMotorControl2(robot_id, jointIndex=joint,
+                                controlMode=p.TORQUE_CONTROL,
+                                force=torque)
 
-    # Control hip and knee joints separately
-    p.setJointMotorControl2(robot_id, jointIndex=HIP_JOINT, controlMode=p.POSITION_CONTROL,
+    # Hip and knee
+    p.setJointMotorControl2(robot_id, HIP_JOINT, controlMode=p.POSITION_CONTROL,
                             targetPosition=desired_hip_angle)
-    p.setJointMotorControl2(robot_id, jointIndex=KNEE_JOINT, controlMode=p.POSITION_CONTROL,
+    p.setJointMotorControl2(robot_id, KNEE_JOINT, controlMode=p.POSITION_CONTROL,
                             targetPosition=desired_knee_angle)
 
-    # Update camera position
-    p.resetDebugVisualizerCamera(cameraDistance=camera_distance,
-                                 cameraYaw=camera_yaw,
-                                 cameraPitch=camera_pitch,
-                                 cameraTargetPosition=pos)
-
-    print(
-        f"Time: {time_elapsed:.2f}s | Pitch: {np.degrees(pitch_angle):.2f}° | Yaw: {np.degrees(yaw_angle):.2f}° | Desired Velocity: {-1*desired_velocity:.2f} m/s | Actual forward velocity: {-1*forward_velocity:.2f} m/s")
+    # Log data
+    log.append([time_elapsed, head_pitch, body_pitch, pitch_rate, forward_velocity,
+                desired_velocity, wheel_velocities[0], wheel_velocities[1],
+                pitch_error, yaw_rate_error])
 
     p.stepSimulation()
     time.sleep(time_step)
+
+# Save log to CSV
+with open("telemetry_log.csv", "w", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(["time", "head_pitch", "body_pitch", "pitch_rate", "forward_velocity",
+                     "desired_velocity", "left_cmd", "right_cmd", "pitch_error", "yaw_rate_error"])
+    writer.writerows(log)
+
+print("✅ Telemetry saved to telemetry_log.csv")
