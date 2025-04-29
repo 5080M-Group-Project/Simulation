@@ -22,7 +22,7 @@ max_wheel_speed = 20  # Max wheel angular velocity (rad/s)
 plane_id = p.loadURDF(os.path.join(pybullet_data.getDataPath(), "plane.urdf"), 0, 0, -1)
 project_path = os.path.expanduser('~/PycharmProjects/Simulation')
 spawn_height = -0.7  # Adjust to ensure proper contact with ground
-robot_id = p.loadURDF(os.path.join(project_path, "lucasURDF/urdf/lucasURDF.urdf"),
+robot_id = p.loadURDF(os.path.join(project_path, "lucasURDF2/urdf/lucasURDF2.urdf"),
                       basePosition=[0, 0, spawn_height])
 
 # Joint indices
