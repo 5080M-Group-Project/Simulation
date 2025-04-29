@@ -14,14 +14,14 @@ p.setGravity(0, 0, -9.81)
 time_step = 1 / 240
 wheel_radius = 0.05
 body_mass = 8.128  # kg
-robot_height = 0.20  # height of the center of mass from the wheel axis
+robot_height = 0.1736  # height of the center of mass from the wheel axis
 g = 9.81  # gravitational acceleration
 max_wheel_speed = 20  # Max wheel angular velocity (rad/s)
 
 # Load plane and robot model
 plane_id = p.loadURDF(os.path.join(pybullet_data.getDataPath(), "plane.urdf"), 0, 0, -1)
 project_path = os.path.expanduser('~/PycharmProjects/Simulation')
-spawn_height = -0.7  # Adjust to ensure proper contact with ground
+spawn_height = -0.65  # Adjust to ensure proper contact with ground
 robot_id = p.loadURDF(os.path.join(project_path, "lucasURDF3/urdf/lucasURDF3.urdf"),
                       basePosition=[0, 0, spawn_height])
 
@@ -42,7 +42,7 @@ B = np.array([[0, 0],
               [0, 0],
               [1 / (body_mass * wheel_radius), -1 / (body_mass * wheel_radius)]])  # Left & Right wheel influence
 
-Q = np.diag([100, 1, 180, 10])  # Penalties for pitch error, pitch rate, velocity error, and yaw rate error
+Q = np.diag([200, 1, 180, 10])  # Penalties for pitch error, pitch rate, velocity error, and yaw rate error 200,1,180,10 stationary gains
 R = np.diag([0.1, 0.1])  # Control effort for left and right wheel speeds
 
 # Solve the continuous-time algebraic Riccati equation
@@ -50,7 +50,7 @@ P = solve_continuous_are(A, B, Q, R)
 K = np.linalg.inv(R) @ B.T @ P  # Compute LQR gain matrix
 
 # Adjustable offsets
-base_pitch_offset = 0.07 #0.07  # Target pitch offset (rad)
+base_pitch_offset =  -0.09 #0.07  # Target pitch offset (rad)
 desired_velocity = -0  # Forward velocity input
 desired_yaw_rate = 0  # Turning rate input
 desired_knee_angle = 0  # Control crouch height. pos extends, causes forward drift, neg crouches causing backward drift
@@ -95,7 +95,7 @@ for i in range(10000000):
     yaw_rate = angular_velocity[2]
 
     # Dynamic pitch offset
-    pitch_offset = base_pitch_offset + 0.04 * desired_velocity
+    pitch_offset = base_pitch_offset #+ 0.04 * desired_velocity
 
     # Compute wheel speeds using LQR
     state = np.array([pitch_angle, pitch_rate, forward_velocity, yaw_rate])
