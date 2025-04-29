@@ -43,7 +43,8 @@ B = np.array([[0, 0],
               [0, 0],
               [1 / (body_mass * wheel_radius), -1 / (body_mass * wheel_radius)]])  # Left & Right wheel influence
 
-Q = np.diag([200, 1, 180, 40])  # Penalties for pitch error, pitch rate, velocity error, and yaw rate error 200,1,180,10 stationary gains
+Q = np.diag([200, 1, 180,
+             40])  # Penalties for pitch error, pitch rate, velocity error, and yaw rate error 200,1,180,10 stationary gains
 R = np.diag([0.1, 0.1])  # Control effort for left and right wheel speeds
 
 # Solve the continuous-time algebraic Riccati equation
@@ -51,14 +52,16 @@ P = solve_continuous_are(A, B, Q, R)
 K = np.linalg.inv(R) @ B.T @ P  # Compute LQR gain matrix
 
 # Adjustable offsets
-base_pitch_offset =  -0.09 #0.07  # Target pitch offset (rad)
+base_pitch_offset = -0.09  # 0.07  # Target pitch offset (rad)
 desired_velocity = 0.2  # Forward velocity input neg=forward
 desired_yaw_rate = -0  # Turning rate input pos=left
 desired_knee_angle = 0  # Control crouch height. pos extends, causes forward drift, neg crouches causing backward drift
-desired_hip_angle = -0 # Control head tilt. pos tilt back, causes forward drift
-#as knee crouches, head needs to tilt back, both crouch = forward drift
-#as knee extends, head tilt must tilt forward = backward drift
-#can brute force to find pitch offset relationship to correct drift at each crouch lvl
+desired_hip_angle = -0  # Control head tilt. pos tilt back, causes forward drift
+
+
+# as knee crouches, head needs to tilt back, both crouch = forward drift
+# as knee extends, head tilt must tilt forward = backward drift
+# can brute force to find pitch offset relationship to correct drift at each crouch lvl
 
 def lqr_control(state, desired_velocity, desired_yaw_rate, pitch_offset):
     state_error = np.array(
@@ -79,15 +82,15 @@ for i in range(10000000):
     time_elapsed += time_step
 
     # Alternate desired velocity every 5 seconds
-    #if int(time_elapsed) % 10 < 5:
+    # if int(time_elapsed) % 10 < 5:
     #    desired_velocity = 0
-    #else:
+    # else:
     #    desired_velocity = 0
 
     # Get robot state
     pos, orn = p.getBasePositionAndOrientation(robot_id)
     euler = p.getEulerFromQuaternion(orn)
-    
+
     pitch_angle = euler[1]
     yaw_angle = euler[2]
     linear_velocity, angular_velocity = p.getBaseVelocity(robot_id)
@@ -96,9 +99,8 @@ for i in range(10000000):
     last_position = pos[0]
     yaw_rate = angular_velocity[2]
 
-
     # Dynamic pitch offset
-    pitch_offset = base_pitch_offset #+ 0.04 * desired_velocity
+    pitch_offset = base_pitch_offset  # + 0.04 * desired_velocity
 
     # Compute wheel speeds using LQR
     state = np.array([pitch_angle, pitch_rate, forward_velocity, yaw_rate])
@@ -122,9 +124,7 @@ for i in range(10000000):
                                  cameraTargetPosition=pos)
 
     print(
-        f"Time: {time_elapsed:.2f}s | Pitch: {np.degrees(pitch_angle-base_pitch_offset):.2f}° | Yaw: {np.degrees(yaw_angle):.2f}° | Desired Velocity: {desired_velocity:.2f} m/s | Actual forward velocity: {-1*forward_velocity:.2f} m/s")
-
-
+        f"Time: {time_elapsed:.2f}s | Pitch: {np.degrees(pitch_angle - base_pitch_offset):.2f}° | Yaw: {np.degrees(yaw_angle):.2f}° | Desired Velocity: {desired_velocity:.2f} m/s | Actual forward velocity: {-1 * forward_velocity:.2f} m/s")
 
     p.stepSimulation()
     time.sleep(time_step)
